@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.env
+__pycache__/
+*.db
+*.log
+*.txt
+!requirements.txt
+!QAWebPrints_Project_Report.txt
+backend/vector_store.faiss/
+backend/dist/
+backend/build/
+*.exe
+*.pkg
