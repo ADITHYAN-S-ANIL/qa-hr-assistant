@@ -1,15 +1,66 @@
-node_modules/
-dist/
-build/
-.env
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Environment variables (NEVER commit these)
+.env
+*.env
+
+# Database files
 *.db
+*.sqlite
+*.sqlite3
+
+# Logs
 *.log
 *.txt
 !requirements.txt
-!QAWebPrints_Project_Report.txt
-backend/vector_store.faiss/
+!README.md
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Build outputs (PyInstaller)
 backend/dist/
 backend/build/
 *.exe
 *.pkg
+*.spec
+
+# Vector store
+backend/vector_store.faiss/
+
+# Test scripts
+backend/test_*.py
+backend/check_*.py
+backend/debug_*.py
+
+# Misc generated files
+*.csv
+app_log.txt
+output.log
+git_diff.txt
+git_diff_utf8.txt
+leave_management.db
+backend/backend_log.txt
+backend/final_log.txt
+backend/inata_index.txt
+backend/mcp_*.txt
+backend/mcp_*.db
+backend/demo.db
+backend/rag_debug*.txt
+backend/working_model.txt
+backend/server.log
+
+# OS files
+.DS_Store
+Thumbs.db
