@@ -1,55 +1,56 @@
 # QA HR Assistant
 ### AI-Powered HR Management System for QAWebPrints Infocorp LLP
 
-> A full-stack HR Intelligence platform with a local AI chatbot powered entirely by **Ollama** (no external API keys required). The AI assistant answers any natural language question about employees, tasks, and leave requests using **live PostgreSQL database data**.
+A full-stack HR Intelligence platform with a local AI chatbot powered entirely by **Ollama** (no external API keys required). The AI assistant answers any natural language question about employees, tasks, and leave requests using **live PostgreSQL database data**.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 - [Project Overview](#project-overview)
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
-- [Part 1 — Ollama Setup (Detailed)](#part-1--ollama-setup-detailed)
-- [Part 2 — Database Setup & Connection](#part-2--database-setup--connection)
-- [Part 3 — How the HR Assistant Connects to the Database](#part-3--how-the-hr-assistant-connects-to-the-database)
-- [Part 4 — Backend Setup](#part-4--backend-setup)
-- [Part 5 — Frontend Setup](#part-5--frontend-setup)
-- [Part 6 — Running on a Server (Production/Another Machine)](#part-6--running-on-a-server-productionanother-machine)
+- [Part 1 - Ollama Setup (Detailed)](#part-1---ollama-setup-detailed)
+- [Part 2 - Database Setup and Connection](#part-2---database-setup-and-connection)
+- [Part 3 - How the HR Assistant Connects to the Database](#part-3---how-the-hr-assistant-connects-to-the-database)
+- [Part 4 - Backend Setup](#part-4---backend-setup)
+- [Part 5 - Frontend Setup](#part-5---frontend-setup)
+- [Part 6 - Running on a Server](#part-6---running-on-a-server)
+- [Part 7 - Integrating into an Existing Node.js Portal](#part-7---integrating-into-an-existing-nodejs-portal)
 - [Environment Variables](#environment-variables)
-- [Roles & Permissions](#roles--permissions)
+- [Roles and Permissions](#roles-and-permissions)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
-## 🧾 Project Overview
+## Project Overview
 
 The **QA HR Assistant** is an internal HR management system that includes:
 - **Role-based dashboards** for CEO, Manager, HR, and Employee
-- **Task tracking** — log, assign, and monitor work items
-- **Leave management** — apply, approve, and reject leave requests
-- **AI-powered HR Chatbot** — answers natural language questions like *"Who applied for leave?"* or *"Show all pending tasks"* using **100% live, real-time data from PostgreSQL**
+- **Task tracking** - log, assign, and monitor work items
+- **Leave management** - apply, approve, and reject leave requests
+- **AI-powered HR Chatbot** - answers natural language questions like *"Who applied for leave?"* using **live, real-time data from PostgreSQL**
 
-The entire AI system runs **locally using Ollama** — no OpenAI, no Anthropic, no external API keys, no internet required after setup.
+The entire AI system runs **locally using Ollama** - no OpenAI, no Anthropic, no external API keys.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer        | Technology                         |
 |--------------|------------------------------------|
 | Frontend     | React.js, Vite, Vanilla CSS        |
 | Backend      | Python 3.x, Flask                  |
 | Database     | PostgreSQL                         |
-| DB Driver    | psycopg2 (Python ↔ PostgreSQL)     |
+| DB Driver    | psycopg2 (Python to PostgreSQL)    |
 | AI Engine    | Ollama (local LLM inference)       |
-| AI Framework | LangChain (prompt & message assembly) |
+| AI Framework | LangChain (prompt assembly)        |
 | Auth         | JWT (JSON Web Tokens)              |
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
-Make sure the following are installed before starting:
+Make sure the following are installed:
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Node.js 18+](https://nodejs.org/)
 - [PostgreSQL 14+](https://www.postgresql.org/download/)
@@ -58,77 +59,71 @@ Make sure the following are installed before starting:
 
 ---
 
-## Part 1 — Ollama Setup (Detailed)
+## Part 1 - Ollama Setup (Detailed)
 
-Ollama is the engine that runs the AI model locally on your machine. It works like a local server — once running, Flask connects to it to generate AI responses.
+Ollama is the engine that runs the AI model locally on your machine. It works like a local server - once running, Flask connects to it to generate AI responses.
 
 ### 1.1 Install Ollama
 
 **Windows:**
-1. Go to [https://ollama.com/download](https://ollama.com/download)
+1. Go to https://ollama.com/download
 2. Download the Windows installer and run it
 3. After install, open a terminal and verify:
-   ```bash
+   ```
    ollama --version
    ```
 
 **macOS:**
-```bash
+```
 brew install ollama
 ```
 
 **Linux (Ubuntu/Debian):**
-```bash
+```
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
----
-
 ### 1.2 Start the Ollama Service
 
-Ollama must be running before the backend starts. It listens on `http://localhost:11434` by default.
+Ollama must be running before the backend starts. It listens on `http://localhost:11434`.
 
-```bash
+```
 ollama serve
 ```
 
-To run it in the background (Linux/macOS):
-```bash
+To run it in the background on Linux/macOS:
+```
 nohup ollama serve &
 ```
 
 To verify it is running:
-```bash
-curl http://localhost:11434
-# Should return: "Ollama is running"
 ```
-
----
+curl http://localhost:11434
+# Should return: Ollama is running
+```
 
 ### 1.3 Pull the AI Model
 
-This project uses **Llama 3.2** by default. Pull it once (requires internet, ~2GB download):
+This project uses Llama 3.2 by default. Pull it once (~2GB download):
 
-```bash
+```
 ollama pull llama3.2
 ```
 
 Verify the model is ready:
-```bash
+```
 ollama list
-# Should show: llama3.2   ...   (size)
+# Should show: llama3.2
 ```
 
-You can test the model manually to confirm it is working:
-```bash
+Test the model manually:
+```
 ollama run llama3.2 "How many employees does QAWebPrints have?"
 ```
 
----
-
 ### 1.4 How Flask Connects to Ollama
 
-In `backend/app.py`, the LangChain library is used to connect Flask to the local Ollama server:
+In `backend/app.py`, the LangChain library connects Flask to the local Ollama server:
 
 ```python
 from langchain_ollama import ChatOllama
@@ -137,7 +132,7 @@ def get_llm(model_choice='llama'):
     return ChatOllama(
         model="llama3.2",
         base_url="http://localhost:11434",  # Ollama server address
-        temperature=0.3                     # Lower = more factual, less creative
+        temperature=0.3                     # Lower = more factual
     )
 ```
 
@@ -149,15 +144,15 @@ Every time a user sends a chat message, Flask:
 
 ---
 
-## Part 2 — Database Setup & Connection
+## Part 2 - Database Setup and Connection
 
 ### 2.1 Install PostgreSQL
 
-Download from [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+Download from https://www.postgresql.org/download/
 
 During setup:
-- Remember the **username** (default: `postgres`) and **password** you set
-- Keep the default port: **5432**
+- Remember the username (default: postgres) and password you set
+- Keep the default port: 5432
 
 ### 2.2 Create the Database
 
@@ -171,20 +166,18 @@ CREATE DATABASE qa_hr_db;
 
 After cloning the project and setting up `.env`, run:
 
-```bash
+```
 cd backend
 python init_db.py
 ```
 
 This creates all required tables:
-- `users` — employee accounts and roles
-- `tasks` — work assignments
-- `leaves` — leave requests
-- `sessions` — chat history storage
+- `users` - employee accounts and roles
+- `tasks` - work assignments
+- `leaves` - leave requests
+- `sessions` - chat history storage
 
 ### 2.4 How Flask Connects to PostgreSQL
-
-In `backend/app.py`, a connection is established using `psycopg2`:
 
 ```python
 import psycopg2
@@ -200,47 +193,46 @@ def get_db():
     return conn
 ```
 
-All values are read from the `.env` file — never hardcoded.
+All values come from the `.env` file - never hardcoded.
 
 ---
 
-## Part 3 — How the HR Assistant Connects to the Database
+## Part 3 - How the HR Assistant Connects to the Database
 
-This is the most important part. Here is the **exact flow** of how the AI chatbot reads from the database and answers questions:
+This is the most important part. Here is the exact flow:
 
 ### Step-by-Step Flow
 
 ```
 User types: "Who applied for leave?"
          |
-         ▼
+         v
 Flask /api/chat endpoint receives the message
          |
-         ▼
+         v
 _fetch_live_company_data(user_id, role) is called
-  → SQL Query 1: SELECT all employees from `users` table
-  → SQL Query 2: SELECT all tasks from `tasks` table
-  → SQL Query 3: SELECT all leave requests from `leaves` table
+  --> SQL Query 1: SELECT all employees from users table
+  --> SQL Query 2: SELECT all tasks from tasks table
+  --> SQL Query 3: SELECT all leave requests from leaves table
          |
-         ▼
-All SQL results are formatted into a readable text block:
+         v
+All SQL results formatted into a readable text block:
   "=== EMPLOYEES ===
    - arjun@qawebprints.com (Role: employee)
-   - govindh@1234gmail.com (Role: manager)
-   ...
+   - govindh@gmail.com (Role: manager)
    === LEAVE REQUESTS ===
-   - [APPROVED] arjun@qawebprints.com applied for regular leave on 2026-06-26"
+   - [APPROVED] arjun applied for regular leave on 2026-06-26"
          |
-         ▼
-This text is injected into Ollama's System Prompt via LangChain:
-  SystemMessage: "You are the HR Assistant. Use ONLY the data below to answer..."
+         v
+Text is injected into Ollama's system prompt via LangChain:
+  SystemMessage: "You are the HR Assistant. Use ONLY the data below..."
   HumanMessage: "Who applied for leave?"
          |
-         ▼
-Ollama reads the injected data and replies:
-  "Arjun applied for regular leave on 2026-06-26. It has been approved."
+         v
+Ollama reads the data and replies:
+  "Arjun applied for regular leave on 2026-06-26. Status: Approved."
          |
-         ▼
+         v
 Flask returns the response to the React frontend
 ```
 
@@ -263,7 +255,7 @@ def _fetch_live_company_data(user_id, user_role):
             FROM tasks t JOIN users u ON t.user_id = u.id
         """)
 
-        # Fetch leave requests (uses 'type' column, not 'leave_type')
+        # Fetch leave requests (column is 'type', not 'leave_type')
         cur.execute("""
             SELECT u.email, l.type, l.start_date, l.end_date, l.reason, l.status
             FROM leaves l JOIN users u ON l.user_id = u.id
@@ -272,153 +264,134 @@ def _fetch_live_company_data(user_id, user_role):
 
 ### Why This Approach (No Keywords Needed)
 
-Old approach (broken): The AI guessed which database function to call → hallucinations, routing errors.
-
-New approach (current): The backend fetches ALL data upfront and gives it directly to Ollama → the AI simply reads the data and answers. No guessing. No tools. No keywords required.
+- Old approach (broken): AI guesses which function to call, causing hallucinations
+- New approach (current): Backend fetches ALL data and gives it directly to Ollama. The AI reads the data and answers. No guessing. No keywords required.
 
 ---
 
-## Part 4 — Backend Setup
+## Part 4 - Backend Setup
 
-```bash
-# 1. Navigate to backend folder
+```
 cd backend
-
-# 2. Create Python virtual environment
 python -m venv .venv
 
-# 3. Activate it
+# Activate
 .venv\Scripts\activate       # Windows
 source .venv/bin/activate    # macOS/Linux
 
-# 4. Install all dependencies
 pip install -r requirements.txt
 
-# 5. Create your .env file
 copy .env.example .env       # Windows
 cp .env.example .env         # macOS/Linux
-# Open .env and fill in your database password and JWT secret
 
-# 6. Initialize the database
 python init_db.py
-
-# 7. Start the backend server
 python app.py
-# Flask API will run on: http://localhost:5000
+# Flask API runs on: http://localhost:5000
 ```
 
 ---
 
-## Part 5 — Frontend Setup
+## Part 5 - Frontend Setup
 
-```bash
+```
 cd frontend
 npm install
 npm run dev
-# React app will run on: http://localhost:5173
+# React app runs on: http://localhost:5173
 ```
 
 ---
 
-## Part 6 — Running on a Server (Production/Another Machine)
+## Part 6 - Running on a Server
 
-When deploying this project on a **different computer or a Linux server**, follow these steps:
+When deploying on a different computer or a Linux server:
 
-### 6.1 On the Server — Install All Prerequisites
+### Install All Prerequisites
 
-```bash
-# Install Python
+```
 sudo apt install python3 python3-pip python3-venv -y
 
-# Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install nodejs -y
 
-# Install PostgreSQL
 sudo apt install postgresql postgresql-contrib -y
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# Install Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-### 6.2 Pull the AI Model on the New Server
+### Pull the AI Model
 
-```bash
+```
 ollama pull llama3.2
 ```
 
-### 6.3 Clone & Configure
+### Clone and Configure
 
-```bash
+```
 git clone https://github.com/ADITHYAN-S-ANIL/qa-hr-assistant.git
 cd qa-hr-assistant
 
-# Setup backend
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-nano .env   # Fill in your DB_HOST, DB_PASSWORD, JWT_SECRET_KEY
+# Edit .env with your DB credentials
 python3 init_db.py
 
-# Setup frontend
 cd ../frontend
 npm install
 ```
 
-### 6.4 Run All Services on a Server
+### Run All 3 Services
 
-Use **3 separate terminal sessions** (or use `screen`/`tmux`):
-
-```bash
-# Terminal 1: Start Ollama
+```
+# Terminal 1: Ollama
 ollama serve
 
-# Terminal 2: Start Backend
+# Terminal 2: Flask Backend
 cd backend && source .venv/bin/activate && python3 app.py
 
-# Terminal 3: Start Frontend
+# Terminal 3: Frontend
 cd frontend && npm run dev
 ```
 
-### 6.5 Run as Background Services (Production)
+### Run as Permanent Background Services
 
-For long-running server deployment, use `systemd` or `pm2`:
-
-**Backend with systemd:**
-```bash
-sudo nano /etc/systemd/system/qa-backend.service
+**Ollama (auto-registered by installer):**
 ```
-```ini
-[Unit]
-Description=QA HR Assistant Backend
-After=network.target
-
-[Service]
-WorkingDirectory=/path/to/qa-hr-assistant/backend
-ExecStart=/path/to/.venv/bin/python app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-```bash
-sudo systemctl enable qa-backend
-sudo systemctl start qa-backend
-```
-
-**Ollama as a service (auto-start):**
-Ollama automatically registers itself as a systemd service on Linux during installation.
-```bash
 sudo systemctl enable ollama
 sudo systemctl start ollama
 ```
 
+**Flask Backend with systemd:**
+```
+sudo nano /etc/systemd/system/qa-hr-assistant.service
+```
+```
+[Unit]
+Description=QA HR Assistant Flask Backend
+After=network.target ollama.service
+
+[Service]
+WorkingDirectory=/path/to/qa-hr-assistant/backend
+ExecStart=/path/to/.venv/bin/python app.py
+EnvironmentFile=/path/to/qa-hr-assistant/backend/.env
+Restart=always
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target
+```
+```
+sudo systemctl enable qa-hr-assistant
+sudo systemctl start qa-hr-assistant
+```
+
 **Frontend with PM2:**
-```bash
+```
 npm install -g pm2
 cd frontend
 pm2 start "npm run dev" --name qa-frontend
@@ -428,34 +401,273 @@ pm2 save
 
 ---
 
-## 🔐 Environment Variables
+## Part 7 - Integrating into an Existing Node.js Portal
+
+If your company already has an HR portal built with Node.js / Express, you do NOT need to replace it. The HR Assistant runs as a **separate microservice** and your Node.js portal connects to it via HTTP.
+
+### 7.1 Architecture Overview
+
+```
+Browser (Your Existing Portal)
+        |
+        | Calls your Node.js portal as usual
+        v
+Your Node.js / Express Portal  (e.g. port 3000)
+        |
+        | Proxies /hr-assistant/* requests
+        v
+Flask HR Assistant Microservice  (port 5000)
+        |                    |
+        v                    v
+  PostgreSQL DB         Ollama AI (port 11434)
+```
+
+Your Node.js portal never runs any AI itself. It simply **forwards chat requests** to the Flask service, which handles all AI and database work.
+
+---
+
+### 7.2 Step 1 - Start the Flask HR Assistant
+
+On the same server as your Node.js portal:
+
+```
+cd qa-hr-assistant/backend
+source .venv/bin/activate    # Linux/macOS
+.venv\Scripts\activate       # Windows
+python app.py                # Runs on port 5000
+```
+
+Also make sure Ollama is running:
+```
+ollama serve
+```
+
+---
+
+### 7.3 Step 2 - Add a Proxy in Your Node.js / Express App
+
+Install the proxy middleware in your **existing** Node.js project:
+
+```
+npm install http-proxy-middleware
+```
+
+In your Express `server.js` or `app.js`, add:
+
+```javascript
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+// Proxy all /hr-assistant/* requests to Flask on port 5000
+app.use('/hr-assistant', createProxyMiddleware({
+    target: 'http://localhost:5000',
+    changeOrigin: true,
+    pathRewrite: {
+        '^/hr-assistant': ''    // Strip the /hr-assistant prefix
+    },
+    on: {
+        error: (err, req, res) => {
+            res.status(502).json({ error: 'HR Assistant service is unavailable' });
+        }
+    }
+}));
+
+// Your existing routes remain untouched
+app.use('/api', yourExistingRouter);
+```
+
+Now your portal will automatically forward:
+- POST /hr-assistant/api/chat    --> POST http://localhost:5000/api/chat
+- GET  /hr-assistant/api/tasks   --> GET  http://localhost:5000/api/tasks
+- GET  /hr-assistant/api/leaves  --> GET  http://localhost:5000/api/leaves
+
+---
+
+### 7.4 Step 3 - Bridge Your Login to Get an HR Assistant Token
+
+The Flask service uses its own JWT tokens. When a user logs in to your Node.js portal, also fetch an HR Assistant token:
+
+```javascript
+const axios = require('axios');
+
+app.post('/api/login', async (req, res) => {
+
+    // --- Your existing login logic ---
+    const user = await YourUserModel.findOne({ email: req.body.email });
+    const yourToken = generateYourJWT(user);
+
+    // --- Bridge: Also get an HR Assistant token ---
+    let hrToken = null;
+    try {
+        const hrRes = await axios.post('http://localhost:5000/api/login', {
+            email: req.body.email,
+            password: req.body.password
+        });
+        hrToken = hrRes.data.token;
+    } catch (e) {
+        console.error('HR Assistant login failed:', e.message);
+    }
+
+    res.json({
+        token: yourToken,     // Your existing portal token
+        hr_token: hrToken     // HR Assistant JWT token
+    });
+});
+```
+
+On the frontend, store both tokens when the user logs in:
+```javascript
+const data = await fetch('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+    headers: { 'Content-Type': 'application/json' }
+}).then(r => r.json());
+
+localStorage.setItem('token', data.token);
+localStorage.setItem('hr_token', data.hr_token);
+```
+
+---
+
+### 7.5 Step 4 - Embed the Chat Widget in Your Existing Portal
+
+Copy the chatbot component from this project into your frontend:
+```
+qa-hr-assistant/frontend/src/components/Dashboards/FloatingChatbot.jsx
+    -->  your-portal/src/components/FloatingChatbot.jsx
+```
+
+Then add it to your main layout or dashboard page:
+```jsx
+import FloatingChatbot from './components/FloatingChatbot';
+
+function DashboardLayout({ children }) {
+    const hrToken = localStorage.getItem('hr_token');
+
+    return (
+        <div className="layout">
+            <YourSidebar />
+            <main>{children}</main>
+
+            {/* HR Assistant chatbot - appears as a floating button */}
+            {hrToken && <FloatingChatbot apiBase="/hr-assistant" token={hrToken} />}
+        </div>
+    );
+}
+```
+
+---
+
+### 7.6 Step 5 - Sending Chat Messages via Raw API Call
+
+If you want to build your own custom chat UI instead of using the widget:
+
+```javascript
+async function sendHRMessage(userMessage) {
+    const hrToken = localStorage.getItem('hr_token');
+
+    const response = await fetch('/hr-assistant/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hrToken}`
+        },
+        body: JSON.stringify({
+            message: userMessage,
+            session_id: null,       // null = new session
+            chat_mode: 'general'
+        })
+    });
+
+    const data = await response.json();
+    return data.reply;    // The AI's response string
+}
+
+// Example usage
+const answer = await sendHRMessage("How many employees are on leave today?");
+// Returns: "1 employee is on approved leave: Arjun (regular leave, 2026-06-26)."
+```
+
+---
+
+### 7.7 Running All Services Permanently on a Linux Server
+
+**Ollama (auto-managed by systemd after install):**
+```
+sudo systemctl enable ollama
+sudo systemctl start ollama
+```
+
+**Flask HR Assistant as a systemd service:**
+```
+sudo nano /etc/systemd/system/qa-hr-assistant.service
+```
+```
+[Unit]
+Description=QA HR Assistant Flask Microservice
+After=network.target ollama.service
+
+[Service]
+WorkingDirectory=/path/to/qa-hr-assistant/backend
+ExecStart=/path/to/qa-hr-assistant/backend/.venv/bin/python app.py
+EnvironmentFile=/path/to/qa-hr-assistant/backend/.env
+Restart=always
+User=ubuntu
+
+[Install]
+WantedBy=multi-user.target
+```
+```
+sudo systemctl enable qa-hr-assistant
+sudo systemctl start qa-hr-assistant
+```
+
+**Your Node.js Portal (using PM2):**
+```
+npm install -g pm2
+cd your-nodejs-portal
+pm2 start server.js --name my-hr-portal
+pm2 startup
+pm2 save
+```
+
+---
+
+### 7.8 Complete Service Summary
+
+| Service             | Port  | Managed By | Purpose                         |
+|---------------------|-------|------------|---------------------------------|
+| Ollama              | 11434 | systemd    | Runs the AI model locally       |
+| Flask HR Assistant  | 5000  | systemd    | AI queries + database access    |
+| Your Node.js Portal | 3000  | PM2        | Existing portal (user-facing)   |
+| PostgreSQL          | 5432  | systemd    | Employee, task, leave data      |
+
+---
+
+## Environment Variables
 
 Create `backend/.env` from the template:
 
-```env
-# PostgreSQL Database
+```
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=qa_hr_db
 DB_USER=postgres
 DB_PASSWORD=your_password_here
 
-# JWT Secret (use a long random string)
 JWT_SECRET_KEY=change_this_to_a_long_random_string
 
-# Ollama Configuration (no changes needed for local setup)
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
 ```
 
-> ⚠️ **Never commit `.env` to GitHub.** It is listed in `.gitignore`.
+WARNING: Never commit `.env` to GitHub. It is listed in `.gitignore`.
 
 ---
 
-## 👥 Roles & Permissions
+## Roles and Permissions
 
-| Role     | Dashboard Data Visible              | AI Chatbot Access       |
-|----------|-------------------------------------|-------------------------|
+| Role     | Dashboard Data Visible               | AI Chatbot Access       |
+|----------|--------------------------------------|-------------------------|
 | CEO      | All employees, all tasks, all leaves | Full company data       |
 | Manager  | Their team's tasks and leaves        | Team-scoped data only   |
 | HR       | All employees and leave requests     | HR-scoped data          |
@@ -463,38 +675,33 @@ OLLAMA_MODEL=llama3.2
 
 ---
 
-## 💡 Troubleshooting
+## Troubleshooting
 
 **Ollama not responding?**
-```bash
-# Check status
+```
 curl http://localhost:11434
-# Restart it
 ollama serve
 ```
 
 **Model not found?**
-```bash
-ollama list          # Check what models are available
-ollama pull llama3.2 # Re-download if missing
+```
+ollama list
+ollama pull llama3.2
 ```
 
-**Backend can't connect to database?**
-```bash
-# Check PostgreSQL is running
-sudo systemctl status postgresql     # Linux
-# Check your .env DB_PASSWORD matches your PostgreSQL password
-```
+**Backend cannot connect to database?**
+- Check PostgreSQL is running
+- Verify DB_PASSWORD in .env matches your PostgreSQL password
 
 **Frontend shows blank page or proxy error?**
-- Make sure the backend Flask server is running on port `5000`
-- Check `frontend/vite.config.js` proxy setting points to `http://localhost:5000`
+- Make sure the Flask backend is running on port 5000
+- Check `frontend/vite.config.js` proxy setting points to http://localhost:5000
 
-**AI gives wrong answers?**
-- The Ollama model needs to be running (`ollama serve`)
-- Ensure the correct model is pulled (`ollama list` should show `llama3.2`)
+**AI gives wrong or empty answers?**
+- Make sure Ollama is running: `ollama serve`
+- Make sure the model is downloaded: `ollama list` should show llama3.2
 
 ---
 
-## 📄 License
-Internal project — QAWebPrints Infocorp LLP. All rights reserved.
+## License
+Internal project - QAWebPrints Infocorp LLP. All rights reserved.
